@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section>
+  <article>
+    <h1>Make a reservation</h1>
+    <!--Begin row-->
+    <div class="row">
+      <!--Begin col-->
+      <div class="column">
+          {% csrf_token %}
+          <form method="POST" id="form">
+            <!-- {% csrf_token %} -->
+            <p>
+              <label for="first_name">Name:</label>
+              <input type="text" placeholder="Your Name" maxlength="200" required="" id="first_name">
+            </p>
+            <p>
+
+            <!-- Step 9: Part one -->
+              <label for="reservation_date">Reservation Date:</label>
+              <input type="date" id="reservation_date">
+
+            </p>
+
+            <p>
+              <label for="reservation_slot">Reservation time:</label>
+              <select id="reservation_slot">
+                <option value="0" disabled>Select time</option>
+              </select>
+            </p>
+            <button type="button" id="button">Reserve</button>
+          </form>
+      </div>
+      <!--End col-->
+
+      <!--Begin col-->
+      <div class="column">
+        <h2>Bookings For <span id="today"></span></h2>
+        <div id="bookings">
+        </div>
+      </div>
+      <!--End col-->
+    </div>
+    <!--End row-->
+
+
+
+
+  </article>
+</section>
+<script>
+  //Sets the default value of the reservation date to today's date.
+  //This line creates a new Date object representing the current date and time.
+  //This line sets the value of the element with the ID 'reservation_date' to the current date in the format 'YYYY-MM-DD'. It uses string interpolation to format the date with leading zeros for months and days.
+  const date = new Date()
+  document.getElementById('reservation_date').value = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`
+
+  //Calls the 'getBookings()' function to fetch and display existing bookings.
+  //This line logs the value of the 'reservation_date' input field to the console. It helps in debugging and verifying that the date is set correctly.
+  console.log(document.getElementById('reservation_date').value);
+  getBookings() //This line calls the getBookings() function to fetch and display existing bookings when the page loads.
+
+
+  /*  Step 10: Part two */
+  //Attaches an event listener to the reservation date input field to update bookings when the date changes.
+  //This line attaches an event listener to the 'reservation_date' input field. When the value of this field changes (i.e., when the user selects a different date), the getBookings() function is called to update the bookings accordingly.
+  document.getElementById('reservation_date').addEventListener('change', function(){getBookings();});
+
+  //Defines the 'getBookings()' function to fetch bookings from the server and update the UI accordingly.
+  //This block defines the getBookings() function, which fetches existing bookings from the server and updates the UI based on the retrieved data.
+  function getBookings() {
+    let reserved_slots = [] //This line initializes an empty array to store the reserved time slots retrieved from the server.
+    const date = document.getElementById('reservation_date').value //This line retrieves the selected date from the 'reservation_date' input field.
+    document.getElementById('today').innerHTML = date // This line updates the content of the element with the ID 'today' to display the selected date. It's likely used to inform users about the currently selected date.
+
+    fetch("{% url 'bookings' %}" + '?date=' + date) // This line makes a fetch request to the server to retrieve existing bookings for the selected date. It uses the Django template tag {% url 'bookings' %} to dynamically generate the URL for the bookings endpoint.
+      .then(r => r.json()) //This line converts the response from the server to JSON format.
+      //This line defines a callback function that handles the retrieved data. Inside this function, the existing bookings are processed and displayed on the UI.
+      .then(data => {
+        reserved_slots = []
+        bookings = ''
+
+        /* Step 11: Part three */
+        //This loop iterates over the array of booking data retrieved from the server. For each booking, it extracts the relevant information (such as the name and time slot) and formats it for display.
+        for (const item of data){
+          console.log(item.fields);
+          reserved_slots.push(item.fields.reservation_slot);
+          bookings += `<p>${item.fields.first_name} - ${formatTime(item.fields.reservation_slot)}</p>`;
+
+        };
+
+        /* Step 12: Part four  */
+        //This block of code generates HTML options for the reservation time dropdown menu. It creates options for time slots from 10 AM to 8 PM, checking if each slot is already reserved and disabling it if necessary.
+        let slot_options = '<option value="0" disabled>Select time</option>';
+
+        for(let i = 10; i <= 20; i++){
+          const label = formatTime(i);
+          if (reserved_slots.includes(i)) {
+            slot_options += `<option value=${i} disabled>${label}</option>`
+
+          } else{
+            slot_options += `<option value=${i}>${label}</option>`
+          }
+
+        }
+
+        //This line updates the HTML content of the 'reservation_slot' dropdown menu with the generated options.
+        document.getElementById('reservation_slot').innerHTML = slot_options
+        //This line checks if there are no existing bookings for the selected date. If so, it updates the 'bookings' variable to display a message indicating that there are no bookings.
+        if(bookings==''){
+          bookings = "No bookings"
+        }
+        document.getElementById('bookings').innerHTML = bookings //This line updates the HTML content of the 'bookings' element with the retrieved booking information or the message indicating no bookings.
+      })
+  }
+  //Defines the 'formatTime()' function to format reservation times.
+  //This block defines the formatTime() function, which formats a given time (in hours) into a readable format with AM or PM appended.
+  function formatTime(time) {
+    const ampm = time < 12 ? 'AM' : 'PM';
+    const t = time < 12 ? time : time > 12 ? time - 12 : time;
+    const label = `${t} ${ampm}`;
+    return label;
+  }
+
+  //Attaches an event listener to the reserve button to handle form submission.
+  //This line attaches an event listener to the 'button' element. When the button is clicked, the function defined inside the listener is executed. It handles form submission by fetching the reservation details entered by the user, sending them to the server, and updating the bookings UI.
+  document.getElementById('button').addEventListener('click', function (e) {
+    const formdata = {
+      first_name: document.getElementById('first_name').value,
+      reservation_date: document.getElementById('reservation_date').value,
+      reservation_slot: document.getElementById('reservation_slot').value,
+    }
+
+    fetch("{% url 'bookings' %}", { method: 'post', body: JSON.stringify(formdata) })
+      .then(r => r.text())
+      .then(data => {
+        getBookings();
+      })
+  })
+</script>
+{% endblock %}

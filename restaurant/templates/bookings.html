@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section>
+  <article>
+    <h1>All Reservations</h1>
+    <!--Begin row-->
+    <div class="row">
+      <!--Begin col-->
+      <div class="column">
+        <pre id="bookings"></pre>
+      </div>
+      <!--End col-->
+
+      <!--Begin col-->
+      <div class="column">
+        <div class="videowrap">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d11898.289517452584!2d-87.60853049433447!3d41.79442860243028!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x880e2912ce6f7027%3A0xc0cfb5545d4a37b2!2sHyde%20Park%2C%20Chicago%2C%20IL%2C%20USA!5e0!3m2!1sen!2spt!4v1662384760663!5m2!1sen!2spt"
+            width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      </div>
+      <!--End col-->
+    </div>
+    <!--End row-->
+
+
+
+
+  </article>
+</section>
+<script>
+  //This line declares a constant variable named bookings and assigns it the result of parsing a JSON string.
+  //The JSON string appears to be coming from a server-side template, as indicated by {{ bookings|safe }}.
+  //The |safe filter suggests that the content should be treated as safe and not escaped for HTML.
+  const bookings = JSON.parse('{{ bookings|safe }}')
+
+  //This line logs the value of the bookings variable to the browser console.
+  //This is typically used for debugging purposes to inspect the data that has been parsed from the JSON string
+  console.log(bookings);
+
+  // This line declares another constant variable named pretty_json and assigns it the result of converting the
+  //bookings object back into a JSON string. The null parameter is used to indicate no filtering or transformation
+  //of the data, and 2 is used to specify the number of spaces for indentation in the resulting JSON string,
+  //making it more human-readable
+  const pretty_json = JSON.stringify(bookings,null,2)
+
+  //This line finds an HTML element with the id of 'bookings' and sets its inner HTML to the value of the pretty_json variable.
+  //This effectively displays the JSON data in a human-readable format within that HTML element
+  document.getElementById('bookings').innerHTML = pretty_json
+</script>
+{% endblock %}
